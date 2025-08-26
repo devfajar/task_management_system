@@ -94,6 +94,7 @@ func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (GetUserByIDRow
 const listUsers = `-- name: ListUsers :many
 SELECT id, username, email, is_active, created_at, updated_at
 FROM users
+WHERE deleted_at IS NULL
 ORDER BY created_at DESC
 LIMIT $1 OFFSET $2
 `
@@ -137,6 +138,32 @@ func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]ListUse
 		return nil, err
 	}
 	return items, nil
+}
+
+const restoreUser = `-- name: RestoreUser :exec
+UPDATE users
+SET deleted_at = NULL,
+    updated_at = NOW()
+WHERE id = $1 AND deleted_at IS NOT NULL
+`
+
+// Restore (opsional)
+func (q *Queries) RestoreUser(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.Exec(ctx, restoreUser, id)
+	return err
+}
+
+const softDeleteUser = `-- name: SoftDeleteUser :exec
+UPDATE users
+SET deleted_at = NOW(),
+    updated_at = NOW()
+WHERE id = $1 AND deleted_at IS NULL
+`
+
+// Soft delete (default)
+func (q *Queries) SoftDeleteUser(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.Exec(ctx, softDeleteUser, id)
+	return err
 }
 
 const updateUserPassword = `-- name: UpdateUserPassword :exec

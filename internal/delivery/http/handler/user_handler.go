@@ -20,6 +20,7 @@ func (h *UserHandler) RegisterRoutes(r *gin.Engine) {
 		api.PUT("/:id", h.updateProfile)
 		api.PATCH("/:id/password", h.updatePassword)
 		api.DELETE("/:id", h.delete)
+		api.POST("/:id/restore", h.restore)
 	}
 }
 
@@ -137,7 +138,29 @@ func (h *UserHandler) delete(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
 		return
 	}
-	if err := h.UC.Delete(c, id); err != nil {
+
+	force := c.Query("force") == "true"
+	var opErr error
+	if force {
+		// TODO: pastikan hanya admin yang boleh force delete (middleware/authorization)
+		opErr = h.UC.ForceDelete(c, id)
+	} else {
+		opErr = h.UC.Delete(c, id)
+	}
+	if opErr != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": opErr.Error()})
+		return
+	}
+	c.Status(http.StatusNoContent)
+}
+
+func (h *UserHandler) restore(c *gin.Context) {
+	id, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
+		return
+	}
+	if err := h.UC.Restore(c, id); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}

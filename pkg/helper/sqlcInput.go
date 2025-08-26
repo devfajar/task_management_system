@@ -1,6 +1,10 @@
 package helper
 
-import "github.com/jackc/pgx/v5/pgtype"
+import (
+	"time"
+
+	"github.com/jackc/pgx/v5/pgtype"
+)
 
 func ToText(p *string) pgtype.Text {
 	if p == nil {
@@ -13,4 +17,11 @@ func ToBool(p *bool) pgtype.Bool {
 		return pgtype.Bool{}
 	}
 	return pgtype.Bool{Bool: *p, Valid: true}
+}
+
+func TtzPtr(t pgtype.Timestamptz) *time.Time {
+	if !t.Valid {
+		return nil
+	}
+	return &t.Time
 }

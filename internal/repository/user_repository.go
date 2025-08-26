@@ -20,15 +20,20 @@ type UserRepository interface {
 	List(ctx context.Context, limit, offset int32) ([]entities.User, error)
 	UpdateProfile(ctx context.Context, id uuid.UUID, username, email *string, isActive *bool) (entities.User, error)
 	UpdatePassword(ctx context.Context, id uuid.UUID, newHash string) error
-	Delete(ctx context.Context, id uuid.UUID) error
+	Delete(ctx context.Context, id uuid.UUID) error // alias SoftDelete
+	ForceDelete(ctx context.Context, id uuid.UUID) error
+	Restore(ctx context.Context, id uuid.UUID) error
 }
 
 type userRepo struct {
 	q *db.Queries
 }
 
+// NewUserRepository
+func NewUserRepository(pool *pgxpool.Pool) UserRepository { return &userRepo{q: db.New(pool)} }
+
+// Create new user
 func (userRepo *userRepo) Create(ctx context.Context, u entities.User) (entities.User, error) {
-	//TODO implement me
 	row, err := userRepo.q.CreateUser(ctx, db.CreateUserParams{
 		ID:       u.Id,
 		Username: u.Username,
@@ -51,8 +56,8 @@ func (userRepo *userRepo) Create(ctx context.Context, u entities.User) (entities
 	}, nil
 }
 
+// Get user by id
 func (userRepo userRepo) GetByID(ctx context.Context, id uuid.UUID) (entities.User, error) {
-	//TODO implement me
 	row, err := userRepo.q.GetUserByID(ctx, id)
 	if err != nil {
 		return entities.User{}, err
@@ -68,8 +73,8 @@ func (userRepo userRepo) GetByID(ctx context.Context, id uuid.UUID) (entities.Us
 	}, nil
 }
 
+// List all users
 func (userRepo userRepo) List(ctx context.Context, limit, offset int32) ([]entities.User, error) {
-	//TODO implement me
 	rows, err := userRepo.q.ListUsers(ctx, db.ListUsersParams{Limit: limit, Offset: offset})
 	if err != nil {
 		return nil, err
@@ -88,8 +93,8 @@ func (userRepo userRepo) List(ctx context.Context, limit, offset int32) ([]entit
 	return out, nil
 }
 
+// Update user profile
 func (userRepo userRepo) UpdateProfile(ctx context.Context, id uuid.UUID, username, email *string, isActive *bool) (entities.User, error) {
-	//TODO implement me
 	row, err := userRepo.q.UpdateUserProfile(ctx, db.UpdateUserProfileParams{
 		ID:       id,
 		Username: helper.ToText(username),
@@ -112,14 +117,22 @@ func (userRepo userRepo) UpdateProfile(ctx context.Context, id uuid.UUID, userna
 	}, nil
 }
 
+// Update user password
 func (userRepo userRepo) UpdatePassword(ctx context.Context, id uuid.UUID, newHash string) error {
-	//TODO implement me
 	return userRepo.q.UpdateUserPassword(ctx, db.UpdateUserPasswordParams{ID: id, Password: newHash})
 }
 
-func (userRepo userRepo) Delete(ctx context.Context, id uuid.UUID) error {
-	//TODO implement me
+// Soft delete user
+func (userRepo *userRepo) Delete(ctx context.Context, id uuid.UUID) error {
+	return userRepo.q.SoftDeleteUser(ctx, id)
+}
+
+// Hard delete user
+func (userRepo *userRepo) ForceDelete(ctx context.Context, id uuid.UUID) error {
 	return userRepo.q.DeleteUser(ctx, id)
 }
 
-func NewUserRepository(pool *pgxpool.Pool) UserRepository { return &userRepo{q: db.New(pool)} }
+// Restore user
+func (userRepo *userRepo) Restore(ctx context.Context, id uuid.UUID) error {
+	return userRepo.q.RestoreUser(ctx, id)
+}

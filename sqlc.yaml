@@ -21,3 +21,7 @@ sql:
             go_type:
               import: "time"
               type: "Time"
+          - column: "users.deleted_at"
+            go_type:
+              import: "github.com/jackc/pgx/v5/pgtype"
+              type: "Timestamptz"

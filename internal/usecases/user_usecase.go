@@ -21,15 +21,17 @@ type UserUsecase interface {
 	List(ctx context.Context, limit, offset int32) ([]entities.User, error)
 	UpdateProfile(ctx context.Context, id uuid.UUID, username, email *string, isActive *bool) (entities.User, error)
 	UpdatePassword(ctx context.Context, id uuid.UUID, newPassword string) error
-	Delete(ctx context.Context, id uuid.UUID) error
+	Delete(ctx context.Context, id uuid.UUID) error      // soft
+	ForceDelete(ctx context.Context, id uuid.UUID) error // hard (admin-only)
+	Restore(ctx context.Context, id uuid.UUID) error
 }
 
 type userUC struct{ repo repository.UserRepository }
 
 func NewUserUsecase(userRepo repository.UserRepository) UserUsecase { return &userUC{repo: userRepo} }
 
+// Create new user
 func (u *userUC) Create(ctx context.Context, username, email, password string) (entities.User, error) {
-	//TODO implement me
 	if username == "" || email == "" || password == "" {
 		return entities.User{}, ErrBadInput
 	}
@@ -42,26 +44,26 @@ func (u *userUC) Create(ctx context.Context, username, email, password string) (
 	})
 }
 
+// Get user by id
 func (u userUC) GetById(ctx context.Context, id uuid.UUID) (entities.User, error) {
-	//TODO implement me
 	return u.repo.GetByID(ctx, id)
 }
 
+// List all users
 func (u userUC) List(ctx context.Context, limit, offset int32) ([]entities.User, error) {
-	//TODO implement me
 	if limit <= 0 {
 		limit = 20
 	}
 	return u.repo.List(ctx, limit, offset)
 }
 
+// Update user profile
 func (u userUC) UpdateProfile(ctx context.Context, id uuid.UUID, username, email *string, isActive *bool) (entities.User, error) {
-	//TODO implement me
 	return u.repo.UpdateProfile(ctx, id, username, email, isActive)
 }
 
+// Update user password
 func (u userUC) UpdatePassword(ctx context.Context, id uuid.UUID, newPassword string) error {
-	//TODO implement me
 	if newPassword == "" {
 		return ErrBadInput
 	}
@@ -72,7 +74,17 @@ func (u userUC) UpdatePassword(ctx context.Context, id uuid.UUID, newPassword st
 	return u.repo.UpdatePassword(ctx, id, hash)
 }
 
+// Delete user
 func (u userUC) Delete(ctx context.Context, id uuid.UUID) error {
-	//TODO implement me
 	return u.repo.Delete(ctx, id)
+}
+
+// Hard delete user
+func (u *userUC) ForceDelete(ctx context.Context, id uuid.UUID) error {
+	return u.repo.ForceDelete(ctx, id)
+}
+
+func (u *userUC) Restore(ctx context.Context, id uuid.UUID) error {
+	//TODO implement me
+	return u.repo.Restore(ctx, id)
 }
