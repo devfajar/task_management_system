@@ -11,6 +11,26 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type Permission struct {
+	ID          uuid.UUID `json:"id"`
+	Key         string    `json:"key"`
+	Description string    `json:"description"`
+	CreatedAt   time.Time `json:"created_at"`
+}
+
+type Role struct {
+	ID        uuid.UUID `json:"id"`
+	Key       string    `json:"key"`
+	Name      string    `json:"name"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+type RolePermission struct {
+	RoleID       uuid.UUID `json:"role_id"`
+	PermissionID uuid.UUID `json:"permission_id"`
+	CreatedAt    time.Time `json:"created_at"`
+}
+
 type User struct {
 	ID        uuid.UUID          `json:"id"`
 	Username  string             `json:"username"`
@@ -20,4 +40,10 @@ type User struct {
 	CreatedAt time.Time          `json:"created_at"`
 	UpdatedAt time.Time          `json:"updated_at"`
 	DeletedAt pgtype.Timestamptz `json:"deleted_at"`
+}
+
+type UserRole struct {
+	UserID    uuid.UUID `json:"user_id"`
+	RoleID    uuid.UUID `json:"role_id"`
+	CreatedAt time.Time `json:"created_at"`
 }
