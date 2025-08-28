@@ -4,22 +4,34 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/devfajar/task-management-system/internal/delivery/http/middleware"
 	"github.com/devfajar/task-management-system/internal/usecases"
+	"github.com/devfajar/task-management-system/pkg/helper"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
 
-type UserHandler struct{ UC usecases.UserUsecase }
+type UserHandler struct {
+	UC   usecases.UserUsecase
+	Auth middleware.Auth
+}
 
-func (h *UserHandler) RegisterRoutes(r *gin.Engine) {
-	api := r.Group("/v1/users")
+func (h *UserHandler) RegisterRoutes(v1 *gin.RouterGroup) {
+	api := v1.Group("/users")
 	{
 		api.POST("", h.create)
 		api.GET("", h.list)
 		api.GET("/:id", h.get)
 		api.PUT("/:id", h.updateProfile)
 		api.PATCH("/:id/password", h.updatePassword)
+
+		// Soft delete (default)
 		api.DELETE("/:id", h.delete)
+
+		// Force delete — proteksi dengan permission dari JWT
+		api.DELETE("/:id/force", h.Auth.Require(helper.UserForceDelete), h.forceDelete)
+
+		// Restore soft-deleted user
 		api.POST("/:id/restore", h.restore)
 	}
 }
@@ -149,6 +161,19 @@ func (h *UserHandler) delete(c *gin.Context) {
 	}
 	if opErr != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": opErr.Error()})
+		return
+	}
+	c.Status(http.StatusNoContent)
+}
+
+func (h *UserHandler) forceDelete(c *gin.Context) {
+	id, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
+		return
+	}
+	if err := h.UC.ForceDelete(c, id); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 	c.Status(http.StatusNoContent)

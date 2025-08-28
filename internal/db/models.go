@@ -18,6 +18,17 @@ type Permission struct {
 	CreatedAt   time.Time `json:"created_at"`
 }
 
+type RefreshToken struct {
+	ID        uuid.UUID          `json:"id"`
+	UserID    uuid.UUID          `json:"user_id"`
+	TokenHash string             `json:"token_hash"`
+	IssuedAt  time.Time          `json:"issued_at"`
+	ExpiresAt time.Time          `json:"expires_at"`
+	RevokedAt pgtype.Timestamptz `json:"revoked_at"`
+	UserAgent pgtype.Text        `json:"user_agent"`
+	IpAddress pgtype.Text        `json:"ip_address"`
+}
+
 type Role struct {
 	ID        uuid.UUID `json:"id"`
 	Key       string    `json:"key"`

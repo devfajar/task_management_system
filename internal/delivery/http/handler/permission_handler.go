@@ -9,8 +9,8 @@ import (
 
 type PermissionHandler struct{ UC usecases.PermissionUsecase }
 
-func (h *PermissionHandler) RegisterRoutes(r *gin.Engine) {
-	api := r.Group("/v1/permissions")
+func (h *PermissionHandler) RegisterRoutes(v1 *gin.RouterGroup) {
+	api := v1.Group("/permissions")
 	{
 		api.POST("", h.create)
 		api.GET("", h.list)

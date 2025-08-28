@@ -12,8 +12,8 @@ type RoleHandler struct {
 	UC usecases.RoleUsecase
 }
 
-func (h *RoleHandler) RegisterRoutes(r *gin.Engine) {
-	api := r.Group("/v1/roles")
+func (h *RoleHandler) RegisterRoutes(v1 *gin.RouterGroup) {
+	api := v1.Group("/roles")
 	{
 		api.POST("", h.create)
 		api.GET("", h.list)
