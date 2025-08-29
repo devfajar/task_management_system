@@ -10,7 +10,9 @@ import (
 )
 
 type JWTConfig struct {
-	Secret []byte
+	Secret            []byte
+	CheckTokenVersion bool
+	GetTokenVersion   func(userID uuid.UUID) (int, error)
 }
 
 func JWT(cfg JWTConfig) gin.HandlerFunc {
@@ -20,15 +22,18 @@ func JWT(cfg JWTConfig) gin.HandlerFunc {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "missing bearer token"})
 			return
 		}
-		tok := strings.TrimSpace(h[7:])
-		claims, err := utils.ParseAndVerify(tok, cfg.Secret)
-		if err != nil {
+		token := strings.TrimSpace(h[7:])
+		claims, err := utils.ParseAndVerify(token, cfg.Secret)
+		if err != nil || claims.UserID == uuid.Nil {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "invalid token"})
 			return
 		}
-		if claims.UserID == uuid.Nil {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "invalid subject"})
-			return
+		if cfg.CheckTokenVersion && cfg.GetTokenVersion != nil {
+			tv, err := cfg.GetTokenVersion(claims.UserID)
+			if err != nil || int32(tv) != int32(claims.TokenVersion) {
+				c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "token revoked"})
+				return
+			}
 		}
 		c.Set("user_id", claims.UserID.String())
 		c.Set("roles", claims.Roles)

@@ -5,6 +5,7 @@ import (
 
 	"github.com/devfajar/task-management-system/internal/usecases"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 type AuthHandler struct {
@@ -17,6 +18,7 @@ func (h *AuthHandler) RegisterRoutes(v1 *gin.RouterGroup) {
 		api.POST("/login", h.login)
 		api.POST("/refresh", h.refresh)
 		api.POST("/logout", h.logout)
+		api.POST("/logout-all", h.LogoutAll)
 	}
 }
 
@@ -81,6 +83,20 @@ func (h *AuthHandler) logout(c *gin.Context) {
 	}
 	if err := h.UC.Logout(c, req.RefreshToken); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	c.Status(http.StatusNoContent)
+}
+
+func (h *AuthHandler) LogoutAll(c *gin.Context) {
+	uidStr, ok := c.Get("user_id")
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "missing uid"})
+		return
+	}
+	uid, _ := uuid.Parse(uidStr.(string))
+	if err := h.UC.LogoutAll(c, uid); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 	c.Status(http.StatusNoContent)

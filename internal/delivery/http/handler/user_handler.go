@@ -12,8 +12,9 @@ import (
 )
 
 type UserHandler struct {
-	UC   usecases.UserUsecase
-	Auth middleware.Auth
+	UC    usecases.UserUsecase
+	Auth  middleware.Auth
+	Audit usecases.AuditUsecase
 }
 
 func (h *UserHandler) RegisterRoutes(v1 *gin.RouterGroup) {
@@ -175,6 +176,12 @@ func (h *UserHandler) forceDelete(c *gin.Context) {
 	if err := h.UC.ForceDelete(c, id); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
+	}
+	if h.Audit != nil {
+		if uidStr, ok := c.Get("user_id"); ok {
+			uid, _ := uuid.Parse(uidStr.(string))
+			_ = h.Audit.Log(c, &uid, "users.force_delete", "users", &id, nil, c.ClientIP(), c.GetHeader("User-Agent"))
+		}
 	}
 	c.Status(http.StatusNoContent)
 }

@@ -8,18 +8,20 @@ import (
 )
 
 type Claims struct {
-	UserID uuid.UUID `json:"uid"`
-	Roles  []string  `json:"roles,omitempty"`
-	Perms  []string  `json:"perms,omitempty"`
+	UserID       uuid.UUID `json:"uid"`
+	Roles        []string  `json:"roles,omitempty"`
+	Perms        []string  `json:"perms,omitempty"`
+	TokenVersion int       `json:"tokenVersion,omitempty"`
 	jwt.RegisteredClaims
 }
 
-func SignHS256(secret []byte, issuer string, sub uuid.UUID, roles, perms []string, ttl time.Duration) (string, error) {
+func SignHS256(secret []byte, issuer string, sub uuid.UUID, roles, perms []string, tokenVersion int, ttl time.Duration) (string, error) {
 	now := time.Now()
 	claims := Claims{
-		UserID: sub,
-		Roles:  roles,
-		Perms:  perms,
+		UserID:       sub,
+		Roles:        roles,
+		Perms:        perms,
+		TokenVersion: tokenVersion,
 		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer:    issuer,
 			Subject:   sub.String(),

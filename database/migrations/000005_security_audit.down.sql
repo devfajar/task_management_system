@@ -1,0 +1,2 @@
+DROP TABLE IF EXISTS audit_logs;
+ALTER TABLE users DROP COLUMN IF EXISTS token_version;

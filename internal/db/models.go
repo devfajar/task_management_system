@@ -11,6 +11,18 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type AuditLog struct {
+	ID        uuid.UUID   `json:"id"`
+	UserID    pgtype.UUID `json:"user_id"`
+	Action    string      `json:"action"`
+	Entity    string      `json:"entity"`
+	EntityID  pgtype.UUID `json:"entity_id"`
+	Metadata  []byte      `json:"metadata"`
+	IpAddress pgtype.Text `json:"ip_address"`
+	UserAgent pgtype.Text `json:"user_agent"`
+	CreatedAt time.Time   `json:"created_at"`
+}
+
 type Permission struct {
 	ID          uuid.UUID `json:"id"`
 	Key         string    `json:"key"`
@@ -43,14 +55,15 @@ type RolePermission struct {
 }
 
 type User struct {
-	ID        uuid.UUID          `json:"id"`
-	Username  string             `json:"username"`
-	Email     string             `json:"email"`
-	Password  string             `json:"password"`
-	IsActive  bool               `json:"is_active"`
-	CreatedAt time.Time          `json:"created_at"`
-	UpdatedAt time.Time          `json:"updated_at"`
-	DeletedAt pgtype.Timestamptz `json:"deleted_at"`
+	ID           uuid.UUID          `json:"id"`
+	Username     string             `json:"username"`
+	Email        string             `json:"email"`
+	Password     string             `json:"password"`
+	IsActive     bool               `json:"is_active"`
+	CreatedAt    time.Time          `json:"created_at"`
+	UpdatedAt    time.Time          `json:"updated_at"`
+	DeletedAt    pgtype.Timestamptz `json:"deleted_at"`
+	TokenVersion int32              `json:"token_version"`
 }
 
 type UserRole struct {

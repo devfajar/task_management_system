@@ -30,17 +30,18 @@ type AuthUsecase interface {
 	Login(ctx context.Context, email, passwordPlain, userAgent, ip string) (accessToken, refreshToken string, err error)
 	Refresh(ctx context.Context, refreshToken, userAgent, ip string) (newAccess, newRefresh string, err error)
 	Logout(ctx context.Context, refreshToken string) error
+	LogoutAll(ctx context.Context, userID uuid.UUID) error
 }
-
 type authUC struct {
 	cfg   AuthConfig
 	auth  repository.AuthRepository
 	roles repository.RoleRepository
 	perms repository.PermissionRepository
+	sec   repository.SecurityRepository
 }
 
-func NewAuthUsecase(cfg AuthConfig, auth repository.AuthRepository, roles repository.RoleRepository, perms repository.PermissionRepository) AuthUsecase {
-	return &authUC{cfg: cfg, auth: auth, roles: roles, perms: perms}
+func NewAuthUsecase(cfg AuthConfig, auth repository.AuthRepository, roles repository.RoleRepository, perms repository.PermissionRepository, sec repository.SecurityRepository) AuthUsecase {
+	return &authUC{cfg: cfg, auth: auth, roles: roles, perms: perms, sec: sec}
 }
 
 func (u *authUC) Login(ctx context.Context, email, passwordPlain, ua, ip string) (string, string, error) {
@@ -57,7 +58,12 @@ func (u *authUC) Login(ctx context.Context, email, passwordPlain, ua, ip string)
 		return "", "", err
 	}
 
-	access, err := utils.SignHS256(u.cfg.JWTSecret, u.cfg.JWTIssuer, uid, roleKeys, permKeys, u.cfg.AccessTokenTTL)
+	tv, err := u.sec.GetTokenVersion(ctx, uid)
+	if err != nil {
+		return "", "", err
+	}
+
+	access, err := utils.SignHS256(u.cfg.JWTSecret, u.cfg.JWTIssuer, uid, roleKeys, permKeys, int(tv), u.cfg.AccessTokenTTL)
 	if err != nil {
 		return "", "", err
 	}
@@ -100,7 +106,12 @@ func (u *authUC) Refresh(ctx context.Context, refreshToken, ua, ip string) (stri
 		return "", "", err
 	}
 
-	newAccess, err := utils.SignHS256(u.cfg.JWTSecret, u.cfg.JWTIssuer, uid, roleKeys, permKeys, u.cfg.AccessTokenTTL)
+	tv, err := u.sec.GetTokenVersion(ctx, uid)
+	if err != nil {
+		return "", "", err
+	}
+
+	newAccess, err := utils.SignHS256(u.cfg.JWTSecret, u.cfg.JWTIssuer, uid, roleKeys, permKeys, int(tv), u.cfg.AccessTokenTTL)
 	if err != nil {
 		return "", "", err
 	}
@@ -131,7 +142,11 @@ func (u *authUC) Logout(ctx context.Context, refreshToken string) error {
 	return u.auth.RevokeRefreshToken(ctx, id)
 }
 
-// helper: ambil role keys & permission keys user
+func (u *authUC) LogoutAll(ctx context.Context, userID uuid.UUID) error {
+	return u.sec.BumpTokenVersion(ctx, userID)
+}
+
+// private function
 func (u *authUC) loadRolePerm(ctx context.Context, uid uuid.UUID) (roleKeys, permKeys []string, err error) {
 	// roles
 	rs, err := u.roles.ListUserRoles(ctx, uid)
