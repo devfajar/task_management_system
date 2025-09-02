@@ -85,6 +85,5 @@ func (u *userUC) ForceDelete(ctx context.Context, id uuid.UUID) error {
 }
 
 func (u *userUC) Restore(ctx context.Context, id uuid.UUID) error {
-	//TODO implement me
 	return u.repo.Restore(ctx, id)
 }

@@ -25,7 +25,6 @@ type roleRepo struct{ q *db.Queries }
 func NewRoleRepository(pool *pgxpool.Pool) RoleRepository { return &roleRepo{q: db.New(pool)} }
 
 func (r roleRepo) CreateRole(ctx context.Context, key, name string) (entities.Role, error) {
-	// TODO need to check if role key already exist
 	// TODO need to make data transfer object
 	role, err := r.q.CreateRole(ctx, db.CreateRoleParams{Key: key, Name: name})
 	if err != nil {

@@ -23,11 +23,72 @@ type AuditLog struct {
 	CreatedAt time.Time   `json:"created_at"`
 }
 
+type Board struct {
+	ID          uuid.UUID          `json:"id"`
+	ProjectID   uuid.UUID          `json:"project_id"`
+	Name        string             `json:"name"`
+	Description string             `json:"description"`
+	CreatedAt   time.Time          `json:"created_at"`
+	UpdatedAt   time.Time          `json:"updated_at"`
+	DeletedAt   pgtype.Timestamptz `json:"deleted_at"`
+}
+
+type CardLabel struct {
+	TaskID  uuid.UUID `json:"task_id"`
+	LabelID uuid.UUID `json:"label_id"`
+}
+
+type Checklist struct {
+	ID        uuid.UUID `json:"id"`
+	TaskID    uuid.UUID `json:"task_id"`
+	Title     string    `json:"title"`
+	Position  float64   `json:"position"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+type ChecklistItem struct {
+	ID          uuid.UUID `json:"id"`
+	ChecklistID uuid.UUID `json:"checklist_id"`
+	Content     string    `json:"content"`
+	IsDone      bool      `json:"is_done"`
+	Position    float64   `json:"position"`
+	CreatedAt   time.Time `json:"created_at"`
+}
+
+type Column struct {
+	ID        uuid.UUID          `json:"id"`
+	BoardID   uuid.UUID          `json:"board_id"`
+	Name      string             `json:"name"`
+	WipLimit  pgtype.Int4        `json:"wip_limit"`
+	Position  float64            `json:"position"`
+	CreatedAt time.Time          `json:"created_at"`
+	UpdatedAt time.Time          `json:"updated_at"`
+	DeletedAt pgtype.Timestamptz `json:"deleted_at"`
+}
+
+type Label struct {
+	ID        uuid.UUID `json:"id"`
+	BoardID   uuid.UUID `json:"board_id"`
+	Name      string    `json:"name"`
+	Color     string    `json:"color"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
 type Permission struct {
 	ID          uuid.UUID `json:"id"`
 	Key         string    `json:"key"`
 	Description string    `json:"description"`
 	CreatedAt   time.Time `json:"created_at"`
+}
+
+type Project struct {
+	ID          uuid.UUID          `json:"id"`
+	Name        string             `json:"name"`
+	Description string             `json:"description"`
+	OwnerID     pgtype.UUID        `json:"owner_id"`
+	CreatedAt   time.Time          `json:"created_at"`
+	UpdatedAt   time.Time          `json:"updated_at"`
+	DeletedAt   pgtype.Timestamptz `json:"deleted_at"`
 }
 
 type RefreshToken struct {
@@ -52,6 +113,36 @@ type RolePermission struct {
 	RoleID       uuid.UUID `json:"role_id"`
 	PermissionID uuid.UUID `json:"permission_id"`
 	CreatedAt    time.Time `json:"created_at"`
+}
+
+type Task struct {
+	ID                       uuid.UUID          `json:"id"`
+	ProjectID                uuid.UUID          `json:"project_id"`
+	Title                    string             `json:"title"`
+	Description              string             `json:"description"`
+	Status                   string             `json:"status"`
+	Priority                 int32              `json:"priority"`
+	AssigneeID               pgtype.UUID        `json:"assignee_id"`
+	DueDate                  pgtype.Timestamptz `json:"due_date"`
+	CreatedAt                time.Time          `json:"created_at"`
+	UpdatedAt                time.Time          `json:"updated_at"`
+	DeletedAt                pgtype.Timestamptz `json:"deleted_at"`
+	BoardID                  pgtype.UUID        `json:"board_id"`
+	ColumnID                 pgtype.UUID        `json:"column_id"`
+	Position                 pgtype.Float8      `json:"position"`
+	StoryPoints              pgtype.Float8      `json:"story_points"`
+	OriginalEstimateSeconds  int32              `json:"original_estimate_seconds"`
+	RemainingEstimateSeconds int32              `json:"remaining_estimate_seconds"`
+}
+
+type TimeEntry struct {
+	ID           uuid.UUID   `json:"id"`
+	TaskID       uuid.UUID   `json:"task_id"`
+	UserID       uuid.UUID   `json:"user_id"`
+	SpentSeconds int32       `json:"spent_seconds"`
+	WorkDate     pgtype.Date `json:"work_date"`
+	Note         string      `json:"note"`
+	CreatedAt    time.Time   `json:"created_at"`
 }
 
 type User struct {
